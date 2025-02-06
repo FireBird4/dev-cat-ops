@@ -44,7 +44,7 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ toLower(github.repository) }}:${{ github.sha }}
+            ghcr.io/${{ toLower(github.repository) }}:latest
           # ${{ secrets.DOCKER_HUB_USERNAME}}/{docker_repository}:${{ github.sha }}
           # ${{ secrets.DOCKER_HUB_USERNAME}}/{docker_repository}:latest
