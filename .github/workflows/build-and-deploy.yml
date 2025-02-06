@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Prisma generate
-        run: npx prisma generate
+        run: pnpx prisma generate
       - name: Build with Next.js
         run: pnpm build
       - name: Upload artifact
