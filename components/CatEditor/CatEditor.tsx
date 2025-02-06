@@ -1,14 +1,15 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
 import { Input, Textarea } from "@heroui/input";
 import { Slider } from "@heroui/slider";
 import { useState } from "react";
-import Link from "next/link";
 import { ArrowLeft, DownloadCloud, Save, Trash } from "react-feather";
 
 import CatCard from "../CatCard";
+import ConfirmationButton from "../buttons/ConfirmationButton";
+import PromiseButton from "../buttons/PromiseButton";
+import RedirectionButton from "../buttons/RedirectionButton";
 
 import { cloudImport, onDelete, onSave } from "./actions";
 
@@ -19,6 +20,25 @@ export interface EditorCat
     filename?: string;
     bytes?: string;
     id?: string;
+}
+
+function file2Buffer(file: File) {
+    return new Promise<ArrayBuffer>(function (resolve, reject) {
+        const reader = new FileReader();
+        const readFile = function () {
+            const buffer = reader.result;
+
+            if (!(buffer instanceof ArrayBuffer)) {
+                reject("buffer was invalid");
+            }
+
+            resolve(buffer as ArrayBuffer);
+        };
+
+        reader.addEventListener("load", readFile);
+        reader.addEventListener("error", reject);
+        reader.readAsArrayBuffer(file);
+    });
 }
 
 export default function CatEditor({
@@ -98,13 +118,15 @@ export default function CatEditor({
                                         ...cat,
                                         filename: e.target.files[0].name,
                                         bytes: Buffer.from(
-                                            await e.target.files[0].bytes(),
+                                            await file2Buffer(
+                                                e.target.files[0],
+                                            ),
                                         ).toString("base64"),
                                     });
                                 }
                             }}
                         />
-                        <Button
+                        <PromiseButton
                             isIconOnly
                             onPress={async () => {
                                 const res = await cloudImport();
@@ -116,7 +138,7 @@ export default function CatEditor({
                             }}
                         >
                             <DownloadCloud />
-                        </Button>
+                        </PromiseButton>
                     </div>
                     {errors.picture && (
                         <span className="text-danger text-sm italic">
@@ -125,24 +147,23 @@ export default function CatEditor({
                     )}
                 </CardBody>
                 <CardFooter className="gap-4 justify-end">
-                    <Link href="/">
-                        <Button isIconOnly>
-                            <ArrowLeft />
-                        </Button>
-                    </Link>
+                    <RedirectionButton isIconOnly href="/">
+                        <ArrowLeft />
+                    </RedirectionButton>
                     <div className="flex-1" />
-                    <Button
+                    <ConfirmationButton
                         isIconOnly
                         color="danger"
-                        isDisabled={isNew}
-                        onPress={() => onDelete(defaultCat?.id!)}
+                        description="Willst du diese niedliche Katze wirklich unwiderruflich Löschen?"
+                        title="Achtung"
+                        onConfirm={() => onDelete(defaultCat?.id!)}
                     >
                         <Trash />
-                    </Button>
-                    <Button
+                    </ConfirmationButton>
+                    <PromiseButton
                         isIconOnly
                         color="primary"
-                        onPress={() => {
+                        onPress={async () => {
                             if (!cat.title) {
                                 setErrors({
                                     ...errors,
@@ -166,11 +187,11 @@ export default function CatEditor({
                                 return;
                             }
 
-                            onSave(defaultCat, cat, isNew);
+                            await onSave(defaultCat, cat, isNew);
                         }}
                     >
                         <Save />
-                    </Button>
+                    </PromiseButton>
                 </CardFooter>
             </Card>
             <CatCard nonInteractive cat={cat} />
